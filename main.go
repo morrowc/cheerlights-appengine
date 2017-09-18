@@ -1,12 +1,17 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"time"
 
-	"cloud.google.com/go/datastore"
 	"google.golang.org/appengine"
+	"google.golang.org/appengine/datastore"
+)
+
+var (
+	projectID = "cheerlights-hrd"
 )
 
 type Data struct {
@@ -16,14 +21,67 @@ type Data struct {
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
+	defer func(t time.Time) { fmt.Fprintf(w, "Stored result in %s.", time.Since(t)) }(time.Now())
 	ctx := appengine.NewContext(r)
 
-	data := &Data{SourceIp: "127.0.0.1",
+	// create a safe data struct.
+	data := Data{SourceIp: "127.0.0.1",
 		Color: "white",
-		Date:  time.Now(),
+		Date:  time.Now().Round(0),
 	}
 
-	k := datastore.NameKey("Data", data.Date, nil)
+	// replace the data struct's contents (ip/color) from Get vars.
+	if color := r.URL.Query().Get("color"); color != "" {
+		data.Color = color
+	}
+	if ra := r.RemoteAddr; ra != "" {
+		data.SourceIp = ra
+	}
+
+	k := datastore.NewIncompleteKey(ctx, "Data", nil)
+	if _, err := datastore.Put(ctx, k, &data); err != nil {
+		log.Fatalf("failed to save data to store: %v", err)
+	}
+
+	fmt.Fprintf(w, "saved key/values to store. %v ", data)
+}
+
+func report(w http.ResponseWriter, r *http.Request) {
+	ctx := appengine.NewContext(r)
+
+	// limit report to requestor's data only (by src ip)
+	sip := r.RemoteAddr
+
+	/*// Limit results to 100 last requests by default.
+	limit := 100
+	if l := r.URL.Query().Get("limit"); if l != "" {
+		limit = l
+	}
+
+	// Where clause for the model/sql query.
+	where := fmt.Sprintf("WHERE sip = '%s' ", sip)
+
+	// Escape the restrictions, if admin is set.
+	admin := r.URL.Query().Get("admin")
+	if admin != "" {
+		sip = ""
+		where = ""
+	}
+	*/
+
+	// Construct full sql query.
+	query := datastore.NewQuery("Data").
+		Filter("SourceIp=", sip).
+		Order("Date").
+		Limit(100)
+
+	var results []Data
+	if _, err := query.GetAll(ctx, &results); err != nil {
+		log.Fatalf("failed to retrieve data from the datastore: %v", err)
+	}
+	for _, r := range results {
+		fmt.Fprintf(w, "Result: %v\n", r)
+	}
 
 }
 

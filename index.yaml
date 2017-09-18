@@ -15,3 +15,8 @@ indexes:
   - name: sip
   - name: date
     direction: desc
+
+- kind: Data
+  properties:
+  - name: SourceIp
+  - name: Date
