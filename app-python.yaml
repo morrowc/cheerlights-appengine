@@ -1,0 +1,19 @@
+application: cheerlightsdata
+version: 1
+runtime: python27
+api_version: 1
+threadsafe: false
+
+handlers:
+- url: /favicon\.ico
+  static_files: img/favicon.ico
+  upload: img/favicon\.ico
+
+- url: /img/(.*)
+  static_files: img/\1
+  upload: img/(.*)
+  mime_type: image/jpeg
+  expiration: "30d"
+
+- url: .*
+  script: main.py

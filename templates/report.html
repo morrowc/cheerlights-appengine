@@ -1,0 +1,29 @@
+<html>
+  <body>
+    <center>
+      <img src="http://static.tumblr.com/vhktvf6/aWQlvif7m/cheerlights_logo.png">
+      <script type="text/javascript">document.write(unescape("%3Cscript src='" + "http://www.iobridge.com/widgets/io.js?0SKzLy5H02MP' type='text/javascript'%3E%3C/script%3E"));</script>
+    <br>Update Reporting
+    </center>
+    <hr>
+    <center>
+    <table>
+      <tr>
+        <th align=left>Color</th>
+        <th>SrcIP</th>
+        <th align=left>Time/Date</th>
+      </tr>
+    {% for res in data %}
+      {% if res.color %}
+        <tr>
+          <td width=30%>{{ res.color }}</td>
+          <td width=20% align=center>{{ res.sip }}</td>
+          <td width=30%>{{ res.date|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+      {% endif %}
+    {% endfor %}
+    </table>
+    <hr>
+  </center>
+  </body>
+</html>
