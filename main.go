@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -52,37 +53,29 @@ func report(w http.ResponseWriter, r *http.Request) {
 	// limit report to requestor's data only (by src ip)
 	sip := r.RemoteAddr
 
-	/*// Limit results to 100 last requests by default.
-	limit := 100
-	if l := r.URL.Query().Get("limit"); if l != "" {
-		limit = l
-	}
-
-	// Where clause for the model/sql query.
-	where := fmt.Sprintf("WHERE sip = '%s' ", sip)
-
-	// Escape the restrictions, if admin is set.
-	admin := r.URL.Query().Get("admin")
-	if admin != "" {
-		sip = ""
-		where = ""
-	}
-	*/
-
 	// Construct full sql query.
 	query := datastore.NewQuery("Data").
 		Filter("SourceIp=", sip).
 		Order("Date").
 		Limit(100)
 
+	if admin := r.URL.Query().Get("admin"); admin != "" {
+		query = datastore.NewQuery("Data").
+			Order("Date").
+			Limit(100)
+	}
+
 	var results []Data
 	if _, err := query.GetAll(ctx, &results); err != nil {
 		log.Fatalf("failed to retrieve data from the datastore: %v", err)
 	}
-	for _, r := range results {
-		fmt.Fprintf(w, "Result: %v\n", r)
+	reportTmpl, err := template.New("report").Parse(reportTemplate)
+	if err != nil {
+		log.Fatalf("failed to parse the template: %v", err)
 	}
-
+	if err = reportTmpl.Execute(w, results); err != nil {
+		log.Fatalf("failed to execute the template: %v", err)
+	}
 }
 
 func main() {
