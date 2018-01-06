@@ -41,6 +41,7 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	k := datastore.NewIncompleteKey(ctx, "Data", nil)
 	if _, err := datastore.Put(ctx, k, &data); err != nil {
+		fmt.Fprintf(w, "failed to save data to store: %v", err)
 		log.Fatalf("failed to save data to store: %v", err)
 	}
 
