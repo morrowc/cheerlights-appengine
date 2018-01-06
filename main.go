@@ -56,7 +56,7 @@ func report(w http.ResponseWriter, r *http.Request) {
 	// Construct full sql query.
 	query := datastore.NewQuery("Data").
 		Filter("SourceIp=", sip).
-		Order("Date").
+		Order("-Date").
 		Limit(100)
 
 	if admin := r.URL.Query().Get("admin"); admin != "" {
