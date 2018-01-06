@@ -54,27 +54,31 @@ func report(w http.ResponseWriter, r *http.Request) {
 	// limit report to requestor's data only (by src ip)
 	sip := r.RemoteAddr
 
-	// Construct full sql query.
+	// Construct full sql query, limit to src-ip, unless admin is set.
 	query := datastore.NewQuery("Data").
 		Filter("SourceIp=", sip).
-		Order("+Date").
+		Order("Date").
 		Limit(100)
 
+	// Return full data, if admin is set.
 	if admin := r.URL.Query().Get("admin"); admin != "" {
 		query = datastore.NewQuery("Data").
 			Order("Date").
-			Limit(100)
+			Limit(1000)
 	}
 
 	var results []Data
 	if _, err := query.GetAll(ctx, &results); err != nil {
+		fmt.Fprintf(w, "failed to retrieve data from the datastore: %v", err)
 		log.Fatalf("failed to retrieve data from the datastore: %v", err)
 	}
 	reportTmpl, err := template.New("report").Parse(reportTemplate)
 	if err != nil {
+		fmt.Fprintf(w, "failed to parse the template: %v", err)
 		log.Fatalf("failed to parse the template: %v", err)
 	}
 	if err = reportTmpl.Execute(w, results); err != nil {
+		fmt.Fprintf("failed to execute the template: %v", err)
 		log.Fatalf("failed to execute the template: %v", err)
 	}
 }
