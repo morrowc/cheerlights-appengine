@@ -78,7 +78,7 @@ func report(w http.ResponseWriter, r *http.Request) {
 		log.Fatalf("failed to parse the template: %v", err)
 	}
 	if err = reportTmpl.Execute(w, results); err != nil {
-		fmt.Fprintf("failed to execute the template: %v", err)
+		fmt.Fprintf(w, "failed to execute the template: %v", err)
 		log.Fatalf("failed to execute the template: %v", err)
 	}
 }
