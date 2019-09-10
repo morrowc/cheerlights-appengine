@@ -106,6 +106,6 @@ func main() {
 	http.HandleFunc("/", index)
 	http.HandleFunc("/report", report)
 
-	log.Printf("Listening on port: %v", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
+	log.Printf("Listening on port: %s", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }
