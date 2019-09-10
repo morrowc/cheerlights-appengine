@@ -96,6 +96,10 @@ func report(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func healthz(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "ok")
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -105,6 +109,7 @@ func main() {
 
 	http.HandleFunc("/", index)
 	http.HandleFunc("/report", report)
+	http.HandleFunc("/_ah/health", healthz)
 
 	log.Printf("Listening on port: %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
