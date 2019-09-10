@@ -5,10 +5,10 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/datastore"
+	"cloud.google.com/go/datastore"
 )
 
 var (
@@ -23,7 +23,14 @@ type Data struct {
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	defer func(t time.Time) { fmt.Fprintf(w, "Stored result in %s.", time.Since(t)) }(time.Now())
-	ctx := appengine.NewContext(r)
+
+	ctx := r.Context()
+	// Create new datastore client.
+	client, err := datastore.NewClient(ctx, projectID)
+	if err != nil {
+		fmt.Fprintf(w, "failed to create datastore client: %v", err)
+		log.Fatalf("failed to create datastore client: %v", err)
+	}
 
 	// create a safe data struct.
 	data := Data{SourceIp: "127.0.0.1",
@@ -39,8 +46,8 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		data.SourceIp = ra
 	}
 
-	k := datastore.NewIncompleteKey(ctx, "Data", nil)
-	if _, err := datastore.Put(ctx, k, &data); err != nil {
+	k := datastore.IncompleteKey("Data", nil)
+	if _, err := client.Put(ctx, k, &data); err != nil {
 		fmt.Fprintf(w, "failed to save data to store: %v", err)
 		log.Fatalf("failed to save data to store: %v", err)
 	}
@@ -49,7 +56,13 @@ func handle(w http.ResponseWriter, r *http.Request) {
 }
 
 func report(w http.ResponseWriter, r *http.Request) {
-	ctx := appengine.NewContext(r)
+	ctx := r.Context()
+	// Create new datastore client.
+	client, err := datastore.NewClient(ctx, projectID)
+	if err != nil {
+		fmt.Fprintf(w, "failed to create datastore client: %v", err)
+		log.Fatalf("failed to create datastore client: %v", err)
+	}
 
 	// limit report to requestor's data only (by src ip)
 	sip := r.RemoteAddr
@@ -68,7 +81,7 @@ func report(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var results []Data
-	if _, err := query.GetAll(ctx, &results); err != nil {
+	if _, err := client.GetAll(ctx, query, &results); err != nil {
 		fmt.Fprintf(w, "failed to retrieve data from the datastore: %v", err)
 		log.Fatalf("failed to retrieve data from the datastore: %v", err)
 	}
@@ -84,10 +97,15 @@ func report(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("using default port: %v", port)
+	}
+
 	http.HandleFunc("/", handle)
 	http.HandleFunc("/report", report)
 
-	appengine.Main()
-	log.Print("Listening on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Listening on port: %v", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%v", port), nil))
 }
