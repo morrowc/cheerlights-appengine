@@ -21,7 +21,7 @@ type Data struct {
 	Date     time.Time
 }
 
-func handle(w http.ResponseWriter, r *http.Request) {
+func index(w http.ResponseWriter, r *http.Request) {
 	defer func(t time.Time) { fmt.Fprintf(w, "Stored result in %s.", time.Since(t)) }(time.Now())
 
 	ctx := r.Context()
@@ -103,7 +103,7 @@ func main() {
 		log.Printf("using default port: %v", port)
 	}
 
-	http.HandleFunc("/", handle)
+	http.HandleFunc("/", index)
 	http.HandleFunc("/report", report)
 
 	log.Printf("Listening on port: %v", port)
