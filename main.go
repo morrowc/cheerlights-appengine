@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	projectID = "cheerlights-hrd"
+	projectID = "cheerlightsdata-hrd"
 )
 
 type Data struct {
